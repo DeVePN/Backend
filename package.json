@@ -1,21 +1,36 @@
 {
-  "name": "Backend",
+  "name": "devpn-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "DeVPN Backend API - Decentralized P2P VPN Network",
+  "type": "module",
+  "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/index.js"
+    "start": "NODE_ENV=production node src/load-env.js",
+    "dev": "nodemon src/load-env.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": [
+    "vpn",
+    "decentralized",
+    "ton",
+    "wireguard",
+    "blockchain"
+  ],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.22.0",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.81.1",
+    "@ton/core": "^0.62.0",
+    "@ton/crypto": "^3.3.0",
+    "@ton/ton": "^16.0.0",
     "axios": "^1.13.2",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
     "express": "^5.1.0",
     "nanoid": "^5.1.6",
     "tweetnacl": "^1.0.3"
