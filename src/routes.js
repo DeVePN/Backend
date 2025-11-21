@@ -1,6 +1,6 @@
 import express from 'express';
-import { getNodes, register } from './controllers/nodes.js';
-import { start, stop } from './controllers/session.js';
+import { getNodes, getNodeById, register, heartbeat } from './controllers/nodes.js';
+import { start, stop, getUserSessionsByWallet } from './controllers/session.js';
 import {
   prepareSessionStart,
   prepareSessionEnd,
@@ -30,11 +30,21 @@ router.get(
   getNodes
 );
 
+router.get(
+  '/nodes/:id',
+  getNodeById
+);
+
 router.post(
   '/node/register',
   optionalWalletAuth,
   validateNodeRegistration,
   register
+);
+
+router.post(
+  '/node/heartbeat',
+  heartbeat
 );
 
 // Session endpoints (off-chain tracking)
@@ -49,6 +59,11 @@ router.post(
   '/session/stop',
   validateSessionStop,
   stop
+);
+
+router.get(
+  '/sessions/user/:wallet',
+  getUserSessionsByWallet
 );
 
 // Smart Contract endpoints

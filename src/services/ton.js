@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Address } from '@ton/core';
 
 const TON_API_URL = process.env.TON_API_URL || 'https://testnet.toncenter.com/api/v2';
 const TON_API_KEY = process.env.TON_API_KEY || '';
@@ -88,16 +89,25 @@ export async function verifyPaymentChannel(channelAddress, requiredBalance) {
  * @returns {Promise<boolean>} True if signature is valid
  */
 export async function verifyWalletSignature(walletAddress, signature, message) {
-  // TODO: Implement proper signature verification using TON SDK
-  // For hackathon/testnet, you might skip this or use simplified verification
-  
-  // Placeholder implementation
-  // In production, you'd use:
-  // - TonConnect for wallet authentication
-  // - nacl.sign.detached.verify() for signature verification
-  
-  console.warn('Wallet signature verification not fully implemented');
-  return true; // For testing only
+  try {
+    // Basic validation: check address format is valid TON address
+    const addr = Address.parse(walletAddress);
+
+    // Verify the parsed address matches the input (normalized form)
+    if (!addr || addr.toString() !== walletAddress) {
+      console.warn('Wallet address format mismatch:', walletAddress);
+      return false;
+    }
+
+    // For hackathon: just verify address is valid TON address
+    // TODO: Full signature verification for production using TON Connect SDK
+    console.log('✓ Wallet address format validated:', walletAddress);
+    return true;
+
+  } catch (error) {
+    console.error('Invalid wallet address format:', error.message);
+    return false;
+  }
 }
 
 /**

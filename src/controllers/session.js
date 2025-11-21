@@ -1,7 +1,7 @@
 import { generateWireGuardKeypair } from '../services/keygen.js';
 import { buildClientConfig, addPeerToNode, removePeerFromNode, getPeerStats, assignClientIP } from '../services/wg.js';
 import { validateChannelForSession, deductFromChannel, calculateSessionCost } from '../services/payment.js';
-import { getOrCreateUser, getNodeById, createSession, getSessionByToken, stopSession as dbStopSession } from '../services/supabase.js';
+import { getOrCreateUser, getNodeById, createSession, getSessionByToken, stopSession as dbStopSession, getUserSessions } from '../services/supabase.js';
 import { getBestNode } from '../services/registry.js';
 import { generateSessionToken } from '../utils/id.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
@@ -193,7 +193,53 @@ export const stop = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * GET /sessions/user/:wallet
+ * Get all sessions for a wallet address
+ */
+export const getUserSessionsByWallet = asyncHandler(async (req, res) => {
+  const { wallet } = req.params;
+
+  if (!wallet) {
+    return res.status(400).json({
+      error: 'Wallet address is required'
+    });
+  }
+
+  // Get sessions for this wallet
+  const sessions = await getUserSessions(wallet);
+
+  res.json({
+    success: true,
+    count: sessions.length,
+    sessions: sessions.map(session => ({
+      id: session.id,
+      session_token: session.session_token,
+      user_wallet: wallet,
+      node_id: session.node_id,
+      node: session.nodes ? {
+        id: session.nodes.id,
+        country: session.nodes.country,
+        region: session.nodes.region,
+        city: session.nodes.city,
+        endpoint: session.nodes.endpoint,
+        price_per_minute: session.nodes.price_per_minute
+      } : null,
+      status: session.status,
+      start_time: session.start_time,
+      end_time: session.end_time,
+      client_ip: session.client_ip,
+      bytes_used: session.bytes_used,
+      duration_seconds: session.duration_seconds,
+      cost_nanoton: session.cost_nanoton,
+      created_at: session.created_at,
+      updated_at: session.updated_at
+    }))
+  });
+});
+
 export default {
   start,
-  stop
+  stop,
+  getUserSessionsByWallet
 };

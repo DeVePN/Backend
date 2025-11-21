@@ -2,6 +2,12 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+// Custom BigInt serialization for JSON responses
+// This allows BigInt values from PostgreSQL to be serialized to JSON
+BigInt.prototype.toJSON = function() {
+  return this.toString();
+};
+
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';

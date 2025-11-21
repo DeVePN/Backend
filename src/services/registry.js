@@ -1,4 +1,4 @@
-import { getNodes } from './supabase.js';
+import { getNodes, getNodeById as dbGetNodeById } from './supabase.js';
 
 /**
  * Get recommended nodes based on filters
@@ -116,6 +116,30 @@ export function filterByLoad(nodes, maxLoad) {
 }
 
 /**
+ * Get a single node by ID
+ * @param {number} nodeId - Node ID
+ * @returns {Promise<object>} Node data with score
+ */
+export async function getNodeById(nodeId) {
+  try {
+    const node = await dbGetNodeById(nodeId);
+
+    if (!node) {
+      return null;
+    }
+
+    // Add score to node
+    return {
+      ...node,
+      score: calculateNodeScore(node)
+    };
+  } catch (error) {
+    console.error('Error getting node by ID:', error.message);
+    throw error;
+  }
+}
+
+/**
  * Get a single best node for a user based on preferences
  * @param {object} preferences - User preferences
  * @returns {Promise<object>} Best matching node
@@ -135,6 +159,7 @@ export async function getBestNode(preferences = {}) {
 
 export default {
   getRecommendedNodes,
+  getNodeById,
   calculateNodeScore,
   filterByLocation,
   filterByPrice,

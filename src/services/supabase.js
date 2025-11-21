@@ -274,6 +274,34 @@ export async function stopSession(sessionId, usage) {
 }
 
 /**
+ * Get all sessions for a wallet address
+ */
+export async function getUserSessions(walletAddress) {
+  const { data, error } = await supabase
+    .from('sessions')
+    .select(`
+      *,
+      nodes (
+        id,
+        country,
+        region,
+        city,
+        endpoint,
+        price_per_minute
+      )
+    `)
+    .eq('users.ton_wallet_address', walletAddress)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching user sessions:', error);
+    throw error;
+  }
+
+  return data || [];
+}
+
+/**
  * Log a payment transaction
  */
 export async function logPayment(paymentData) {
