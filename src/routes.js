@@ -25,6 +25,19 @@ router.get('/health', (req, res) => {
   });
 });
 
+// API Root endpoint
+router.get('/', (req, res) => {
+  res.json({
+    message: 'DeVPN API',
+    version: '1.0.0',
+    endpoints: {
+      health: 'GET /api/health',
+      nodes: 'GET /api/nodes',
+      docs: 'https://github.com/your-repo/DeVPN'
+    }
+  });
+});
+
 // User endpoints
 router.post('/users/register', registerUser);
 router.get('/users/me', getCurrentUser);
