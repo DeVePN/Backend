@@ -1,4 +1,12 @@
+import 'dotenv/config';
 import supabase from '../src/services/supabase.js';
+
+/**
+ * Convert TON to nanoTON
+ */
+function tonToNano(ton) {
+    return Math.floor(ton * 1_000_000_000).toString();
+}
 
 /**
  * Seed script to populate the database with test nodes
@@ -12,8 +20,8 @@ async function seedNodes() {
             region: 'asia-pacific',
             country: 'Singapore',
             city: 'Singapore',
-            price_per_gb: 0.5,
-            price_per_minute: 0.001,
+            price_per_gb: tonToNano(0.5),
+            price_per_minute: tonToNano(0.001),
             max_peers: 100,
             bandwidth_mbps: 1000,
             current_load: 25,
@@ -28,8 +36,8 @@ async function seedNodes() {
             region: 'north-america',
             country: 'United States',
             city: 'New York',
-            price_per_gb: 0.3,
-            price_per_minute: 0.0008,
+            price_per_gb: tonToNano(0.3),
+            price_per_minute: tonToNano(0.0008),
             max_peers: 150,
             bandwidth_mbps: 2000,
             current_load: 15,
@@ -44,8 +52,8 @@ async function seedNodes() {
             region: 'europe',
             country: 'Germany',
             city: 'Frankfurt',
-            price_per_gb: 0.4,
-            price_per_minute: 0.0009,
+            price_per_gb: tonToNano(0.4),
+            price_per_minute: tonToNano(0.0009),
             max_peers: 120,
             bandwidth_mbps: 1500,
             current_load: 10,
@@ -60,8 +68,8 @@ async function seedNodes() {
             region: 'europe',
             country: 'United Kingdom',
             city: 'London',
-            price_per_gb: 0.45,
-            price_per_minute: 0.00095,
+            price_per_gb: tonToNano(0.45),
+            price_per_minute: tonToNano(0.00095),
             max_peers: 100,
             bandwidth_mbps: 1200,
             current_load: 30,
@@ -76,8 +84,8 @@ async function seedNodes() {
             region: 'asia-pacific',
             country: 'Japan',
             city: 'Tokyo',
-            price_per_gb: 0.6,
-            price_per_minute: 0.0012,
+            price_per_gb: tonToNano(0.6),
+            price_per_minute: tonToNano(0.0012),
             max_peers: 80,
             bandwidth_mbps: 800,
             current_load: 40,
