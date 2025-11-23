@@ -4,7 +4,7 @@ dotenv.config();
 
 // Custom BigInt serialization for JSON responses
 // This allows BigInt values from PostgreSQL to be serialized to JSON
-BigInt.prototype.toJSON = function() {
+BigInt.prototype.toJSON = function () {
   return this.toString();
 };
 
@@ -23,7 +23,8 @@ try {
   console.error('Environment validation failed:', error.message);
   const nodeEnv = process.env.NODE_ENV;
   if (nodeEnv === 'production') {
-    process.exit(1);
+    console.warn('⚠️ WARNING: Server starting with missing environment variables. Some features may not work.');
+    // process.exit(1); // Disabled to prevent crash loop on Railway
   }
 }
 
