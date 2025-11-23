@@ -159,6 +159,64 @@ export async function getOrCreateUser(telegramId, userData = {}) {
 }
 
 /**
+ * Get user by wallet address
+ */
+export async function getUserByWallet(walletAddress) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('ton_wallet_address', walletAddress)
+    .single();
+
+  if (error && error.code === 'PGRST116') {
+    // User not found
+    return null;
+  }
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Create or update user by wallet address (idempotent)
+ */
+export async function upsertUserByWallet(walletAddress, userData = {}) {
+  // Check if user exists
+  const existingUser = await getUserByWallet(walletAddress);
+
+  if (existingUser) {
+    // Update last_login and any provided data
+    const { data, error } = await supabase
+      .from('users')
+      .update({
+        last_login: new Date().toISOString(),
+        ...userData
+      })
+      .eq('ton_wallet_address', walletAddress)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  // Create new user
+  const { data, error } = await supabase
+    .from('users')
+    .insert([{
+      ton_wallet_address: walletAddress,
+      telegram_id: userData.telegram_id || null,
+      username: userData.username || null,
+      last_login: new Date().toISOString()
+    }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
  * Get payment channel between user and node
  */
 export async function getPaymentChannel(userId, nodeId) {

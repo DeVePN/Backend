@@ -9,8 +9,9 @@ import {
   getNodeFromChain,
   getContractStatus
 } from './controllers/contract.js';
+import { registerUser, getCurrentUser } from './controllers/users.js';
 import { validateQuery, validateNodeRegistration, validateSessionStart, validateSessionStop } from './middleware/validateRequest.js';
-import { verifyWalletAuth, optionalWalletAuth } from './middleware/verifyWalletAuth.js';
+import { verifyWalletAuth, optionalWalletAuth, simpleWalletAuth } from './middleware/verifyWalletAuth.js';
 
 const router = express.Router();
 
@@ -22,6 +23,10 @@ router.get('/health', (req, res) => {
     environment: process.env.NODE_ENV || 'development'
   });
 });
+
+// User endpoints
+router.post('/users/register', registerUser);
+router.get('/users/me', getCurrentUser);
 
 // Node endpoints
 router.get(
