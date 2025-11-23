@@ -10,6 +10,7 @@ import {
   getContractStatus
 } from './controllers/contract.js';
 import { registerUser, getCurrentUser } from './controllers/users.js';
+import { getUserStats } from './controllers/stats.js';
 import { validateQuery, validateNodeRegistration, validateSessionStart, validateSessionStop } from './middleware/validateRequest.js';
 import { verifyWalletAuth, optionalWalletAuth, simpleWalletAuth } from './middleware/verifyWalletAuth.js';
 
@@ -85,5 +86,8 @@ router.post('/contract/sign-usage', signUsage);
 router.get('/contract/session/:sessionId', getSessionFromChain);
 
 router.get('/contract/node/:nodeId', getNodeFromChain);
+
+// User stats endpoint
+router.get('/stats/user/:wallet', getUserStats);
 
 export default router;
