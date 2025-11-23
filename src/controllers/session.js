@@ -273,6 +273,5 @@ export const getActiveSession = asyncHandler(async (req, res) => {
 export default {
   start,
   stop,
-  getUserSessionsByWallet,
   getActiveSession
 };
