@@ -1,4 +1,4 @@
-import { asyncHandler } from '../utils/asyncHandler.js';
+import { asyncHandler } from '../middleware/errorHandler.js';
 import { getUserSessions } from '../services/supabase.js';
 
 /**
