@@ -40,7 +40,7 @@ const corsOrigin = process.env.CORS_ORIGIN || '*';
 const corsOptions = {
   origin: corsOrigin,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-wallet-address', 'x-wallet-signature', 'x-wallet-message'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-wallet-address', 'x-wallet-signature', 'x-wallet-message', 'x-telegram-init-data'],
   credentials: true
 };
 
