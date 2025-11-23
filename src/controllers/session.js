@@ -11,10 +11,17 @@ import { asyncHandler } from '../middleware/errorHandler.js';
  * Start a new VPN session
  */
 export const start = asyncHandler(async (req, res) => {
-  const { telegram_id, node_id, ton_wallet_address, transaction_boc, deposit_amount } = req.body;
+  // Accept both camelCase (from frontend) and snake_case (legacy)
+  const {
+    telegram_id,
+    node_id = req.body.nodeId,           // Accept nodeId or node_id
+    ton_wallet_address = req.body.userWallet,  // Accept userWallet or ton_wallet_address
+    transaction_boc = req.body.transactionBoc, // Accept transactionBoc or transaction_boc
+    deposit_amount = req.body.depositAmount    // Accept depositAmount or deposit_amount
+  } = req.body;
 
   // 1. Get or create user
-  const user = await getOrCreateUser(telegram_id, {
+  const user = await getOrCreateUser(telegram_id || 'web_user', {
     ton_wallet_address: ton_wallet_address || req.wallet?.address
   });
 
