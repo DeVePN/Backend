@@ -55,7 +55,7 @@ export async function getNodes(filters = {}) {
 
   // Default sorting: by price (cheapest first), then by load
   query = query.order('price_per_gb', { ascending: true })
-               .order('current_load', { ascending: true });
+    .order('current_load', { ascending: true });
 
   // Limit results
   const limit = filters.limit || parseInt(process.env.DEFAULT_RECOMMENDED_NODES) || 10;
@@ -335,6 +335,15 @@ export async function stopSession(sessionId, usage) {
  * Get all sessions for a wallet address
  */
 export async function getUserSessions(walletAddress) {
+  // First get the user by wallet
+  const user = await getUserByWallet(walletAddress);
+
+  if (!user) {
+    // No user found, return empty array
+    return [];
+  }
+
+  // Then get sessions for that user
   const { data, error } = await supabase
     .from('sessions')
     .select(`
@@ -348,7 +357,7 @@ export async function getUserSessions(walletAddress) {
         price_per_minute
       )
     `)
-    .eq('users.ton_wallet_address', walletAddress)
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
   if (error) {
