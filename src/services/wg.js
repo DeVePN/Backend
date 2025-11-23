@@ -45,6 +45,12 @@ PresharedKey = ${presharedKey}`;
  * @param {object} peerData - Peer configuration data
  * @returns {Promise<object>} Response from node daemon
  */
+/**
+ * Send peer add request to node daemon
+ * This communicates with the WireGuard daemon running on the VPN node
+ * @param {object} peerData - Peer configuration data
+ * @returns {Promise<object>} Response from node daemon
+ */
 export async function addPeerToNode(peerData) {
   const {
     nodeEndpoint,
@@ -54,28 +60,20 @@ export async function addPeerToNode(peerData) {
     allowedIPs = ['0.0.0.0/0', '::/0']
   } = peerData;
 
-  try {
-    // Extract the base URL from node endpoint (remove port)
-    const [nodeHost] = nodeEndpoint.split(':');
-    const daemonUrl = `http://${nodeHost}:8080/peer/add`;
+  // MOCK IMPLEMENTATION: Skip actual HTTP call to Node Provider
+  // This allows the backend to function without a deployed Node Provider
+  console.log(`[MOCK] Adding peer to node ${nodeEndpoint}`);
+  console.log(`[MOCK] Client IP: ${clientIP}, PubKey: ${clientPublicKey}`);
 
-    const response = await axios.post(daemonUrl, {
-      public_key: clientPublicKey,
-      allowed_ips: allowedIPs,
-      client_ip: clientIP,
-      preshared_key: presharedKey || null
-    }, {
-      timeout: 5000,
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    return response.data;
-  } catch (error) {
-    console.error('Failed to add peer to node:', error.message);
-    throw new Error(`Node daemon communication failed: ${error.message}`);
-  }
+  return {
+    success: true,
+    message: 'Peer added successfully (MOCK)',
+    peer: {
+      publicKey: clientPublicKey,
+      allowedIPs: clientIP,
+      endpoint: nodeEndpoint
+    }
+  };
 }
 
 /**
@@ -89,24 +87,14 @@ export async function removePeerFromNode(peerData) {
     clientPublicKey
   } = peerData;
 
-  try {
-    const [nodeHost] = nodeEndpoint.split(':');
-    const daemonUrl = `http://${nodeHost}:8080/peer/remove`;
+  // MOCK IMPLEMENTATION
+  console.log(`[MOCK] Removing peer from node ${nodeEndpoint}`);
+  console.log(`[MOCK] PubKey: ${clientPublicKey}`);
 
-    const response = await axios.post(daemonUrl, {
-      public_key: clientPublicKey
-    }, {
-      timeout: 5000,
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    return response.data;
-  } catch (error) {
-    console.error('Failed to remove peer from node:', error.message);
-    throw new Error(`Node daemon communication failed: ${error.message}`);
-  }
+  return {
+    success: true,
+    message: 'Peer removed successfully (MOCK)'
+  };
 }
 
 /**
@@ -116,22 +104,16 @@ export async function removePeerFromNode(peerData) {
  * @returns {Promise<object>} Peer statistics (bytes transferred, etc.)
  */
 export async function getPeerStats(nodeEndpoint, clientPublicKey) {
-  try {
-    const [nodeHost] = nodeEndpoint.split(':');
-    const daemonUrl = `http://${nodeHost}:8080/peer/stats`;
+  // MOCK IMPLEMENTATION
+  // Return random stats to simulate usage
+  const rx_bytes = Math.floor(Math.random() * 1000000);
+  const tx_bytes = Math.floor(Math.random() * 1000000);
 
-    const response = await axios.get(daemonUrl, {
-      params: {
-        public_key: clientPublicKey
-      },
-      timeout: 5000
-    });
-
-    return response.data;
-  } catch (error) {
-    console.error('Failed to get peer stats:', error.message);
-    return { rx_bytes: 0, tx_bytes: 0 };
-  }
+  return {
+    rx_bytes,
+    tx_bytes,
+    last_handshake: Date.now()
+  };
 }
 
 /**

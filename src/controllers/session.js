@@ -11,7 +11,7 @@ import { asyncHandler } from '../middleware/errorHandler.js';
  * Start a new VPN session
  */
 export const start = asyncHandler(async (req, res) => {
-  const { telegram_id, node_id, ton_wallet_address } = req.body;
+  const { telegram_id, node_id, ton_wallet_address, transaction_boc, deposit_amount } = req.body;
 
   // 1. Get or create user
   const user = await getOrCreateUser(telegram_id, {
@@ -33,15 +33,41 @@ export const start = asyncHandler(async (req, res) => {
     });
   }
 
-  // 3. Check payment channel has sufficient balance
-  const channelValidation = await validateChannelForSession(user.id, node.id);
-  
-  if (!channelValidation.canStart) {
-    return res.status(402).json({
-      error: 'Payment required',
-      reason: channelValidation.reason,
-      details: channelValidation.details
-    });
+  // 3. Payment Verification
+  let paymentChannelId = null;
+  let estimatedSessionTime = null; // Initialize estimatedSessionTime
+
+  if (transaction_boc) {
+    // TODO: Verify transaction on-chain using the BOC
+    // For now, we accept it as valid proof of payment
+    console.log(`[Payment] Received transaction BOC for user ${user.id}, amount: ${deposit_amount}`);
+
+    // In a real implementation, we would:
+    // 1. Parse BOC
+    // 2. Verify amount matches deposit_amount
+    // 3. Verify destination is node provider wallet
+    // 4. Create a "virtual" channel or record the deposit
+
+    // For now, we'll proceed assuming valid payment
+    // We might want to create a dummy channel ID or use a default one
+    paymentChannelId = 'direct_payment_' + Date.now();
+    // For direct payments, we don't have an estimated session time from a channel
+    // This might need to be calculated based on deposit_amount and node rates
+    estimatedSessionTime = 'N/A';
+
+  } else {
+    // Fallback to existing channel logic
+    const channelValidation = await validateChannelForSession(user.id, node.id);
+
+    if (!channelValidation.canStart) {
+      return res.status(402).json({
+        error: 'Payment required',
+        reason: channelValidation.reason,
+        details: channelValidation.details
+      });
+    }
+    paymentChannelId = channelValidation.channel.id;
+    estimatedSessionTime = channelValidation.estimatedSessionTime;
   }
 
   // 4. Generate WireGuard keypair for client
@@ -71,7 +97,7 @@ export const start = asyncHandler(async (req, res) => {
     session_token: sessionToken,
     user_id: user.id,
     node_id: node.id,
-    payment_channel_id: channelValidation.channel.id,
+    payment_channel_id: paymentChannelId,
     wg_client_private_key: privateKey,
     wg_client_public_key: publicKey,
     wg_server_public_key: node.wg_public_key,
@@ -102,7 +128,7 @@ export const start = asyncHandler(async (req, res) => {
       },
       client_ip: clientIP,
       start_time: session.start_time,
-      estimated_duration: channelValidation.estimatedSessionTime
+      estimated_duration: transaction_boc ? (deposit_amount / (node.price_per_minute || 0.001)) * 60 : 3600 // Fallback or calc
     },
     wireguard_config: wgConfig
   });
@@ -197,7 +223,11 @@ export const stop = asyncHandler(async (req, res) => {
  * GET /sessions/user/:wallet
  * Get all sessions for a wallet address
  */
-export const getUserSessionsByWallet = asyncHandler(async (req, res) => {
+/**
+ * GET /session/active/:wallet
+ * Get the currently active session for a wallet
+ */
+export const getActiveSession = asyncHandler(async (req, res) => {
   const { wallet } = req.params;
 
   if (!wallet) {
@@ -206,40 +236,43 @@ export const getUserSessionsByWallet = asyncHandler(async (req, res) => {
     });
   }
 
-  // Get sessions for this wallet
+  // Get all sessions for this wallet
   const sessions = await getUserSessions(wallet);
+
+  // Find the active one
+  const activeSession = sessions.find(s => s.status === 'active');
+
+  if (!activeSession) {
+    return res.json({
+      success: true,
+      active: false,
+      session: null
+    });
+  }
 
   res.json({
     success: true,
-    count: sessions.length,
-    sessions: sessions.map(session => ({
-      id: session.id,
-      session_token: session.session_token,
-      user_wallet: wallet,
-      node_id: session.node_id,
-      node: session.nodes ? {
-        id: session.nodes.id,
-        country: session.nodes.country,
-        region: session.nodes.region,
-        city: session.nodes.city,
-        endpoint: session.nodes.endpoint,
-        price_per_minute: session.nodes.price_per_minute
+    active: true,
+    session: {
+      id: activeSession.id,
+      session_token: activeSession.session_token,
+      node_id: activeSession.node_id,
+      node: activeSession.nodes ? {
+        id: activeSession.nodes.id,
+        country: activeSession.nodes.country,
+        city: activeSession.nodes.city,
+        endpoint: activeSession.nodes.endpoint
       } : null,
-      status: session.status,
-      start_time: session.start_time,
-      end_time: session.end_time,
-      client_ip: session.client_ip,
-      bytes_used: session.bytes_used,
-      duration_seconds: session.duration_seconds,
-      cost_nanoton: session.cost_nanoton,
-      created_at: session.created_at,
-      updated_at: session.updated_at
-    }))
+      start_time: activeSession.start_time,
+      client_ip: activeSession.client_ip,
+      wg_config: activeSession.wg_config // Assuming we store this or can reconstruct it
+    }
   });
 });
 
 export default {
   start,
   stop,
-  getUserSessionsByWallet
+  getUserSessionsByWallet,
+  getActiveSession
 };

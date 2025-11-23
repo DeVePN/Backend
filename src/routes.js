@@ -1,6 +1,6 @@
 import express from 'express';
 import { getNodes, getNodeById, register, heartbeat } from './controllers/nodes.js';
-import { start, stop, getUserSessionsByWallet } from './controllers/session.js';
+import { start, stop, getUserSessionsByWallet, getActiveSession } from './controllers/session.js';
 import {
   prepareSessionStart,
   prepareSessionEnd,
@@ -69,6 +69,11 @@ router.post(
 router.get(
   '/sessions/user/:wallet',
   getUserSessionsByWallet
+);
+
+router.get(
+  '/session/active/:wallet',
+  getActiveSession
 );
 
 // Smart Contract endpoints
