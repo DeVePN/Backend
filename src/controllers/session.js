@@ -329,7 +329,11 @@ export const getSessionById = asyncHandler(async (req, res) => {
       country: session.nodes.country,
       city: session.nodes.city,
       countryCode: session.nodes.region // Assuming region is country code or similar
-    } : {},
+    } : {
+      country: 'Unknown',
+      city: 'Unknown',
+      countryCode: 'XX'
+    },
     connection: {
       serverIP: session.nodes?.endpoint?.split(':')[0],
       port: session.nodes?.endpoint?.split(':')[1],
