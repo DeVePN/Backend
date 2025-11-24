@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { generateWireGuardKeypair } from '../services/keygen.js';
 import { buildClientConfig, addPeerToNode, removePeerFromNode, getPeerStats, assignClientIP } from '../services/wg.js';
 import { validateChannelForSession, deductFromChannel, calculateSessionCost } from '../services/payment.js';
-import { getOrCreateUser, getNodeById, createSession, getSessionByToken, stopSession as dbStopSession, getUserSessions, createPaymentChannel, getOrCreatePaymentChannel } from '../services/supabase.js';
+import { getOrCreateUser, getNodeById, createSession, getSessionByToken, getSessionById, stopSession as dbStopSession, getUserSessions, createPaymentChannel, getOrCreatePaymentChannel } from '../services/supabase.js';
 import { getBestNode } from '../services/registry.js';
 import { generateSessionToken } from '../utils/id.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
@@ -153,10 +153,13 @@ export const start = asyncHandler(async (req, res) => {
  * Stop an active VPN session
  */
 export const stop = asyncHandler(async (req, res) => {
-  const { session_token } = req.body;
+  const { sessionId, session_token } = req.body;
 
   // 1. Get session from database
-  const session = await getSessionByToken(session_token);
+  // Accept either sessionId (UUID) or session_token for backwards compatibility
+  const session = sessionId
+    ? await getSessionById(sessionId)
+    : await getSessionByToken(session_token);
 
   if (!session) {
     return res.status(404).json({
