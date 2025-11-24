@@ -378,9 +378,57 @@ export const getSessionById = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * GET /sessions/:wallet
+ * Get all sessions for a wallet address
+ */
+export const getSessions = asyncHandler(async (req, res) => {
+  const { wallet } = req.params;
+
+  if (!wallet) {
+    return res.status(400).json({
+      error: 'Wallet address is required'
+    });
+  }
+
+  const sessions = await getUserSessions(wallet);
+
+  // Transform sessions for frontend if needed, or return as is
+  // The frontend expects an array of sessions
+  // We should map them to the expected format
+  const formattedSessions = sessions.map(session => ({
+    id: session.id,
+    sessionToken: session.session_token,
+    status: session.status,
+    startTime: session.start_time,
+    endTime: session.end_time,
+    nodeId: session.node_id,
+    nodeLocation: session.nodes ? {
+      country: session.nodes.country,
+      city: session.nodes.city,
+      countryCode: session.nodes.region
+    } : {
+      country: 'Unknown',
+      city: 'Unknown',
+      countryCode: 'XX'
+    },
+    connection: {
+      serverIP: session.nodes?.endpoint?.split(':')[0],
+      port: session.nodes?.endpoint?.split(':')[1],
+      clientIP: session.client_ip
+    },
+    costPerHour: session.nodes?.price_per_minute ? session.nodes.price_per_minute * 60 : 0,
+    totalCost: session.cost_nanoton,
+    paymentChannelId: session.payment_channel_id
+  }));
+
+  res.json(formattedSessions);
+});
+
 export default {
   start,
   stop,
   getActiveSession,
-  getSessionById
+  getSessionById,
+  getSessions
 };
