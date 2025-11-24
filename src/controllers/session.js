@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { generateWireGuardKeypair } from '../services/keygen.js';
 import { buildClientConfig, addPeerToNode, removePeerFromNode, getPeerStats, assignClientIP } from '../services/wg.js';
 import { validateChannelForSession, deductFromChannel, calculateSessionCost } from '../services/payment.js';
@@ -57,7 +58,7 @@ export const start = asyncHandler(async (req, res) => {
 
     // For now, we'll proceed assuming valid payment
     // We might want to create a dummy channel ID or use a default one
-    paymentChannelId = 'direct_payment_' + Date.now();
+    paymentChannelId = crypto.randomUUID();
     // For direct payments, we don't have an estimated session time from a channel
     // This might need to be calculated based on deposit_amount and node rates
     estimatedSessionTime = 'N/A';
