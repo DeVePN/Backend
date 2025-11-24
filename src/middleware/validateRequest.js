@@ -126,13 +126,17 @@ export function validateSessionStart(req, res, next) {
 
 /**
  * Validate session stop request
+ * Accepts either sessionId (UUID) or session_token for backwards compatibility
  */
 export function validateSessionStop(req, res, next) {
-  const { session_token } = req.body;
+  const { session_token, sessionId } = req.body;
 
-  if (!session_token || typeof session_token !== 'string') {
+  // Accept either sessionId or session_token
+  if ((!session_token && !sessionId) ||
+      (session_token && typeof session_token !== 'string') ||
+      (sessionId && typeof sessionId !== 'string')) {
     return res.status(400).json({
-      error: 'session_token is required and must be a string'
+      error: 'Either sessionId or session_token is required and must be a string'
     });
   }
 
