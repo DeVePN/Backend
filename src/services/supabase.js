@@ -131,6 +131,9 @@ export async function updateNodeStatus(nodeId, status) {
  * Get user by telegram ID or create if doesn't exist
  */
 export async function getOrCreateUser(telegramId, userData = {}) {
+  console.log('[getOrCreateUser] Looking up user by telegram_id:', telegramId);
+  console.log('[getOrCreateUser] Provided wallet address:', userData.ton_wallet_address);
+
   // Try to get existing user
   let { data: user, error } = await supabase
     .from('users')
@@ -140,6 +143,7 @@ export async function getOrCreateUser(telegramId, userData = {}) {
 
   // If user doesn't exist, create one
   if (error && error.code === 'PGRST116') {
+    console.log('[getOrCreateUser] User not found, creating new user');
     const { data: newUser, error: createError } = await supabase
       .from('users')
       .insert([{
@@ -151,10 +155,45 @@ export async function getOrCreateUser(telegramId, userData = {}) {
       .single();
 
     if (createError) throw createError;
+    console.log('[getOrCreateUser] New user created:', {
+      id: newUser.id,
+      telegram_id: newUser.telegram_id,
+      wallet: newUser.ton_wallet_address
+    });
     return newUser;
   }
 
   if (error) throw error;
+
+  // User exists - check if wallet address needs updating
+  console.log('[getOrCreateUser] User found:', {
+    id: user.id,
+    current_wallet: user.ton_wallet_address,
+    new_wallet: userData.ton_wallet_address
+  });
+
+  if (userData.ton_wallet_address && user.ton_wallet_address !== userData.ton_wallet_address) {
+    console.log('[getOrCreateUser] Updating wallet address for existing user');
+    const { data: updatedUser, error: updateError } = await supabase
+      .from('users')
+      .update({
+        ton_wallet_address: userData.ton_wallet_address,
+        last_login: new Date().toISOString()
+      })
+      .eq('id', user.id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('[getOrCreateUser] Failed to update wallet address:', updateError);
+      throw updateError;
+    }
+
+    console.log('[getOrCreateUser] Wallet address updated successfully');
+    return updatedUser;
+  }
+
+  console.log('[getOrCreateUser] Wallet address already up to date');
   return user;
 }
 
