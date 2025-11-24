@@ -143,7 +143,7 @@ export const getNodeById = asyncHandler(async (req, res) => {
     });
   }
 
-  const node = await dbGetNodeById(parseInt(id));
+  const node = await dbGetNodeById(id);
 
   if (!node) {
     return res.status(404).json({
