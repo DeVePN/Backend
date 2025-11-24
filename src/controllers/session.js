@@ -168,9 +168,22 @@ export const stop = asyncHandler(async (req, res) => {
   }
 
   if (session.status !== 'active') {
-    return res.status(400).json({
-      error: 'Session is not active',
-      current_status: session.status
+    // Session already stopped - return success for idempotency
+    // This makes disconnect safe to call multiple times without errors
+    return res.json({
+      success: true,
+      message: 'Session already stopped',
+      session: {
+        id: session.id,
+        status: session.status,
+        start_time: session.start_time,
+        end_time: session.end_time,
+        duration_seconds: session.duration_seconds || 0,
+        data_used_bytes: session.data_used_bytes || 0,
+        data_used_mb: ((session.data_used_bytes || 0) / (1024 * 1024)).toFixed(2),
+        cost_nanoton: session.cost_nanoton || '0',
+        cost_ton: (Number(session.cost_nanoton || 0) / 1e9).toFixed(6)
+      }
     });
   }
 
