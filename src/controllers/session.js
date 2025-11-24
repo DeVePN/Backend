@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { generateWireGuardKeypair } from '../services/keygen.js';
 import { buildClientConfig, addPeerToNode, removePeerFromNode, getPeerStats, assignClientIP } from '../services/wg.js';
 import { validateChannelForSession, deductFromChannel, calculateSessionCost } from '../services/payment.js';
-import { getOrCreateUser, getNodeById, createSession, getSessionByToken, stopSession as dbStopSession, getUserSessions } from '../services/supabase.js';
+import { getOrCreateUser, getNodeById, createSession, getSessionByToken, stopSession as dbStopSession, getUserSessions, createPaymentChannel } from '../services/supabase.js';
 import { getBestNode } from '../services/registry.js';
 import { generateSessionToken } from '../utils/id.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
@@ -50,15 +50,19 @@ export const start = asyncHandler(async (req, res) => {
     // For now, we accept it as valid proof of payment
     console.log(`[Payment] Received transaction BOC for user ${user.id}, amount: ${deposit_amount}`);
 
-    // In a real implementation, we would:
-    // 1. Parse BOC
-    // 2. Verify amount matches deposit_amount
-    // 3. Verify destination is node provider wallet
-    // 4. Create a "virtual" channel or record the deposit
+    // Create a virtual payment channel record to satisfy FK constraint
+    // This represents the direct payment session
+    const channel = await createPaymentChannel({
+      user_id: user.id,
+      node_id: node.id,
+      channel_address: 'virtual_' + crypto.randomUUID(), // Unique dummy address
+      initial_balance: deposit_amount || 0,
+      current_balance: deposit_amount || 0,
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+    });
 
-    // For now, we'll proceed assuming valid payment
-    // We might want to create a dummy channel ID or use a default one
-    paymentChannelId = crypto.randomUUID();
+    paymentChannelId = channel.id;
+
     // For direct payments, we don't have an estimated session time from a channel
     // This might need to be calculated based on deposit_amount and node rates
     estimatedSessionTime = 'N/A';
