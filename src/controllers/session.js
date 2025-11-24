@@ -126,6 +126,7 @@ export const start = asyncHandler(async (req, res) => {
     success: true,
     message: 'Session started successfully',
     session: {
+      id: session.id, // Critical for frontend redirection
       session_token: sessionToken,
       node: {
         id: node.id,
