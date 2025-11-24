@@ -405,6 +405,7 @@ export async function getUserSessions(walletAddress) {
         region,
         city,
         endpoint,
+        price_per_gb,
         price_per_minute
       )
     `)
