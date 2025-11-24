@@ -177,8 +177,7 @@ export async function getOrCreateUser(telegramId, userData = {}) {
     const { data: updatedUser, error: updateError } = await supabase
       .from('users')
       .update({
-        ton_wallet_address: userData.ton_wallet_address,
-        last_login: new Date().toISOString()
+        ton_wallet_address: userData.ton_wallet_address
       })
       .eq('id', user.id)
       .select()
@@ -278,11 +277,10 @@ export async function upsertUserByWallet(walletAddress, userData = {}) {
   const existingUser = await getUserByWallet(walletAddress);
 
   if (existingUser) {
-    // Update last_login and any provided data
+    // Update any provided data (removed last_login as it doesn't exist in schema)
     const { data, error } = await supabase
       .from('users')
       .update({
-        last_login: new Date().toISOString(),
         ...userData
       })
       .eq('ton_wallet_address', walletAddress)
@@ -293,14 +291,13 @@ export async function upsertUserByWallet(walletAddress, userData = {}) {
     return data;
   }
 
-  // Create new user
+  // Create new user (removed last_login as it doesn't exist in schema)
   const { data, error } = await supabase
     .from('users')
     .insert([{
       ton_wallet_address: walletAddress,
       telegram_id: userData.telegram_id || null,
-      username: userData.username || null,
-      last_login: new Date().toISOString()
+      username: userData.username || null
     }])
     .select()
     .single();
