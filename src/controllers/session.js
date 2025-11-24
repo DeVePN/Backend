@@ -137,6 +137,7 @@ export const start = asyncHandler(async (req, res) => {
         id: node.id,
         region: node.region,
         country: node.country,
+        city: node.city,
         endpoint: node.endpoint
       },
       client_ip: clientIP,
