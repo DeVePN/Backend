@@ -82,10 +82,11 @@ export function prepareStartSessionTx(nodeId, depositAmount) {
  * This signature proves the usage data is authentic
  *
  * @param {bigint} sessionId - Session ID
+ * @param {bigint} totalCost - Total cost in nanoTON
  * @param {bigint} usageBytes - Bytes used during session
  * @returns {object} Signature data
  */
-export function signUsageData(sessionId, usageBytes) {
+export function signUsageData(sessionId, totalCost, usageBytes) {
     if (!BACKEND_PRIVATE_KEY) {
         throw new Error('Backend private key not configured');
     }
@@ -93,6 +94,7 @@ export function signUsageData(sessionId, usageBytes) {
     // Create the same data structure as in SessionManager contract
     const dataCell = beginCell()
         .storeUint(sessionId, 64)
+        .storeCoins(totalCost)
         .storeUint(usageBytes, 64)
         .endCell();
 
@@ -114,21 +116,25 @@ export function signUsageData(sessionId, usageBytes) {
  * Backend signs the usage data, then user/backend submits to contract
  *
  * @param {bigint} sessionId - Session ID
+ * @param {bigint} totalCost - Total cost in nanoTON
  * @param {bigint} usageBytes - Bytes used
  * @returns {object} Transaction data
  */
-export function prepareEndSessionTx(sessionId, usageBytes) {
+export function prepareEndSessionTx(sessionId, totalCost, usageBytes) {
     if (!SESSION_MANAGER_ADDRESS) {
         throw new Error('SessionManager address not configured');
     }
 
-    const { signature } = signUsageData(sessionId, usageBytes);
+    const { signature } = signUsageData(sessionId, totalCost, usageBytes);
     const signatureSlice = Buffer.from(signature, 'base64');
 
     // Build EndSession message
+    // OpCode: 0x00000002 (EndSession) - check compiled artifact for exact opcode if different
+    // Assuming standard message structure
     const messageBody = beginCell()
         .storeUint(0x00000002, 32) // op code for EndSession
         .storeUint(sessionId, 64)
+        .storeCoins(totalCost)
         .storeUint(usageBytes, 64)
         .storeBuffer(signatureSlice)
         .endCell();
@@ -140,6 +146,7 @@ export function prepareEndSessionTx(sessionId, usageBytes) {
         stateInit: null,
         signedData: {
             sessionId: sessionId.toString(),
+            totalCost: totalCost.toString(),
             usageBytes: usageBytes.toString(),
             signature: signature
         }

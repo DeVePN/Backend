@@ -277,6 +277,38 @@ export async function updateChannelBalance(channelId, newBalance) {
 }
 
 /**
+ * Get or create payment channel (upsert pattern)
+ * Checks if channel exists for user+node, if yes updates balance, if no creates new
+ */
+export async function getOrCreatePaymentChannel(userId, nodeId, channelData) {
+  // Check if channel exists
+  let channel = await getPaymentChannel(userId, nodeId);
+
+  if (channel) {
+    // Channel exists - update balance (add new deposit to existing balance)
+    const newBalance = BigInt(channel.current_balance) + BigInt(channelData.initial_balance || 0);
+
+    const { data, error } = await supabase
+      .from('payment_channels')
+      .update({
+        current_balance: newBalance.toString(),
+        expires_at: channelData.expires_at,
+        status: 'active', // Reactivate if it was closed
+        last_updated: new Date().toISOString()
+      })
+      .eq('id', channel.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } else {
+    // Channel doesn't exist - create new
+    return await createPaymentChannel(channelData);
+  }
+}
+
+/**
  * Create a new session
  */
 export async function createSession(sessionData) {

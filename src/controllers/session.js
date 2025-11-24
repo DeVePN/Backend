@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { generateWireGuardKeypair } from '../services/keygen.js';
 import { buildClientConfig, addPeerToNode, removePeerFromNode, getPeerStats, assignClientIP } from '../services/wg.js';
 import { validateChannelForSession, deductFromChannel, calculateSessionCost } from '../services/payment.js';
-import { getOrCreateUser, getNodeById, createSession, getSessionByToken, stopSession as dbStopSession, getUserSessions, createPaymentChannel } from '../services/supabase.js';
+import { getOrCreateUser, getNodeById, createSession, getSessionByToken, stopSession as dbStopSession, getUserSessions, createPaymentChannel, getOrCreatePaymentChannel } from '../services/supabase.js';
 import { getBestNode } from '../services/registry.js';
 import { generateSessionToken } from '../utils/id.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
@@ -50,12 +50,12 @@ export const start = asyncHandler(async (req, res) => {
     // For now, we accept it as valid proof of payment
     console.log(`[Payment] Received transaction BOC for user ${user.id}, amount: ${deposit_amount}`);
 
-    // Create a virtual payment channel record to satisfy FK constraint
-    // This represents the direct payment session
-    const channel = await createPaymentChannel({
+    // Get or create payment channel (reuses existing channel for same user+node)
+    // If channel exists, adds new deposit to existing balance
+    const channel = await getOrCreatePaymentChannel(user.id, node.id, {
       user_id: user.id,
       node_id: node.id,
-      channel_address: 'virtual_' + crypto.randomUUID(), // Unique dummy address
+      channel_address: 'virtual_' + crypto.randomUUID(), // Unique dummy address (only used if creating new)
       initial_balance: deposit_amount || 0,
       current_balance: deposit_amount || 0,
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours

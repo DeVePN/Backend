@@ -78,15 +78,19 @@ export const prepareSessionEnd = asyncHandler(async (req, res) => {
     // For demo: assume 1KB per second
     const usageBytes = BigInt(durationSeconds * 1024);
 
+    // Calculate cost (1 nanoTON per byte - matching previous contract logic)
+    // In production, fetch price from node/session
+    const totalCost = usageBytes * 1n;
+
     // Get session ID from on-chain (for hackathon, use database ID as proxy)
     // In production, you'd query the blockchain to get the actual on-chain sessionId
     const sessionId = BigInt(session.id || 0);
 
     // Sign the usage data with backend private key
-    const signedData = tonContract.signUsageData(sessionId, usageBytes);
+    const signedData = tonContract.signUsageData(sessionId, totalCost, usageBytes);
 
     // Prepare EndSession transaction
-    const txData = tonContract.prepareEndSessionTx(sessionId, usageBytes);
+    const txData = tonContract.prepareEndSessionTx(sessionId, totalCost, usageBytes);
 
     res.json({
         success: true,
@@ -95,6 +99,7 @@ export const prepareSessionEnd = asyncHandler(async (req, res) => {
             session_token: session_token,
             sessionId: sessionId.toString(),
             usageBytes: usageBytes.toString(),
+            totalCost: totalCost.toString(),
             durationSeconds: durationSeconds
         },
         transaction: {
@@ -120,7 +125,7 @@ export const prepareSessionEnd = asyncHandler(async (req, res) => {
  * Backend endpoint to sign usage data (for direct contract interaction)
  */
 export const signUsage = asyncHandler(async (req, res) => {
-    const { sessionId, usageBytes } = req.body;
+    const { sessionId, usageBytes, totalCost } = req.body;
 
     if (!sessionId || !usageBytes) {
         return res.status(400).json({
@@ -131,13 +136,16 @@ export const signUsage = asyncHandler(async (req, res) => {
 
     const sessionIdBigInt = BigInt(sessionId);
     const usageBytesBigInt = BigInt(usageBytes);
+    // Default to 1 nanoTON per byte if not provided
+    const totalCostBigInt = totalCost ? BigInt(totalCost) : usageBytesBigInt * 1n;
 
-    const signedData = tonContract.signUsageData(sessionIdBigInt, usageBytesBigInt);
+    const signedData = tonContract.signUsageData(sessionIdBigInt, totalCostBigInt, usageBytesBigInt);
 
     res.json({
         success: true,
         sessionId: sessionId,
         usageBytes: usageBytes,
+        totalCost: totalCostBigInt.toString(),
         signature: signedData.signature,
         signatureHex: signedData.signatureHex,
         dataHash: signedData.dataHash
