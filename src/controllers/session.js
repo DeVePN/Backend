@@ -269,17 +269,31 @@ export const getActiveSession = asyncHandler(async (req, res) => {
     active: true,
     session: {
       id: activeSession.id,
-      session_token: activeSession.session_token,
-      node_id: activeSession.node_id,
-      node: activeSession.nodes ? {
-        id: activeSession.nodes.id,
+      sessionToken: activeSession.session_token,
+      nodeId: activeSession.node_id,
+      nodeName: activeSession.nodes ? `${activeSession.nodes.country}-${activeSession.nodes.city}` : 'Unknown Node',
+      nodeLocation: activeSession.nodes ? {
         country: activeSession.nodes.country,
         city: activeSession.nodes.city,
-        endpoint: activeSession.nodes.endpoint
-      } : null,
-      start_time: activeSession.start_time,
-      client_ip: activeSession.client_ip,
-      wg_config: activeSession.wg_config // Assuming we store this or can reconstruct it
+        countryCode: activeSession.nodes.region || 'XX'
+      } : {
+        country: 'Unknown',
+        city: 'Unknown',
+        countryCode: 'XX'
+      },
+      status: activeSession.status,
+      startTime: activeSession.start_time,
+      endTime: activeSession.end_time,
+      connection: {
+        serverIP: activeSession.nodes?.endpoint?.split(':')[0],
+        port: activeSession.nodes?.endpoint?.split(':')[1],
+        clientIP: activeSession.client_ip
+      },
+      metrics: {
+        dataUsed: activeSession.data_used_bytes || 0,
+        currentSpeed: 0,
+        duration: activeSession.duration_seconds || 0
+      }
     }
   });
 });
