@@ -162,10 +162,15 @@ export async function getOrCreateUser(telegramId, userData = {}) {
  * Get user by wallet address
  */
 export async function getUserByWallet(walletAddress) {
+  // TON addresses can be in different formats (EQ vs 0Q/UQ)
+  // Extract the base64 part (everything after EQ/0Q/UQ prefix)
+  // and search for users with addresses ending in that base64 part
+  const addressBase = walletAddress.replace(/^(EQ|0Q|UQ)/, '');
+
   const { data, error } = await supabase
     .from('users')
     .select('*')
-    .eq('ton_wallet_address', walletAddress)
+    .or(`ton_wallet_address.eq.${walletAddress},ton_wallet_address.like.%${addressBase}`)
     .single();
 
   if (error && error.code === 'PGRST116') {
