@@ -269,31 +269,31 @@ export const getActiveSession = asyncHandler(async (req, res) => {
     active: true,
     session: {
       id: activeSession.id,
-      sessionToken: activeSession.session_token,
-      nodeId: activeSession.node_id,
-      nodeName: activeSession.nodes ? `${activeSession.nodes.country}-${activeSession.nodes.city}` : 'Unknown Node',
-      nodeLocation: activeSession.nodes ? {
+      session_token: activeSession.session_token,
+      node_id: activeSession.node_id,
+      user_id: activeSession.user_id,
+      payment_channel_id: activeSession.payment_channel_id,
+      status: activeSession.status,
+      start_time: activeSession.start_time,
+      end_time: activeSession.end_time,
+      duration_seconds: activeSession.duration_seconds || 0,
+      data_used_bytes: activeSession.data_used_bytes || 0,
+      cost_nanoton: activeSession.cost_nanoton || '0',
+      client_ip: activeSession.client_ip,
+      wg_client_private_key: activeSession.wg_client_private_key,
+      wg_client_public_key: activeSession.wg_client_public_key,
+      wg_server_public_key: activeSession.wg_server_public_key,
+      dns_servers: activeSession.dns_servers || ['1.1.1.1', '8.8.8.8'],
+      allowed_ips: activeSession.allowed_ips || ['0.0.0.0/0', '::/0'],
+      nodes: activeSession.nodes ? {
+        id: activeSession.nodes.id,
+        region: activeSession.nodes.region,
         country: activeSession.nodes.country,
         city: activeSession.nodes.city,
-        countryCode: activeSession.nodes.region || 'XX'
-      } : {
-        country: 'Unknown',
-        city: 'Unknown',
-        countryCode: 'XX'
-      },
-      status: activeSession.status,
-      startTime: activeSession.start_time,
-      endTime: activeSession.end_time,
-      connection: {
-        serverIP: activeSession.nodes?.endpoint?.split(':')[0],
-        port: activeSession.nodes?.endpoint?.split(':')[1],
-        clientIP: activeSession.client_ip
-      },
-      metrics: {
-        dataUsed: activeSession.data_used_bytes || 0,
-        currentSpeed: 0,
-        duration: activeSession.duration_seconds || 0
-      }
+        endpoint: activeSession.nodes.endpoint,
+        price_per_gb: activeSession.nodes.price_per_gb,
+        price_per_minute: activeSession.nodes.price_per_minute
+      } : null
     }
   });
 });
