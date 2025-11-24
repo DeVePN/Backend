@@ -108,4 +108,10 @@ router.get('/contract/node/:nodeId', getNodeFromChain);
 // User stats endpoint
 router.get('/stats/user/:wallet', getUserStats);
 
+// Telegram Webhook
+import { handleWebhook } from './controllers/telegram.js';
+router.post('/webhook/telegram', handleWebhook);
+// Add GET handler just in case user tries to visit in browser
+router.get('/webhook/telegram', (req, res) => res.send('DeVPN Telegram Webhook is active. Please use POST for updates.'));
+
 export default router;

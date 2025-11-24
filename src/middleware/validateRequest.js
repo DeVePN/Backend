@@ -96,13 +96,20 @@ export function validateNodeRegistration(req, res, next) {
 /**
  * Validate session start request
  */
+/**
+ * Validate session start request
+ */
 export function validateSessionStart(req, res, next) {
-  const { telegram_id, node_id } = req.body;
+  // Accept both camelCase and snake_case
+  const telegram_id = req.body.telegram_id || req.body.telegramId;
+  const wallet_address = req.body.ton_wallet_address || req.body.userWallet;
 
   const errors = [];
 
-  if (!telegram_id || typeof telegram_id !== 'string') {
-    errors.push('telegram_id is required and must be a string');
+  // Require either telegram_id OR wallet_address
+  if ((!telegram_id || typeof telegram_id !== 'string') &&
+    (!wallet_address || typeof wallet_address !== 'string')) {
+    errors.push('Either telegram_id or userWallet/ton_wallet_address is required');
   }
 
   // node_id is optional - if not provided, best node will be selected
