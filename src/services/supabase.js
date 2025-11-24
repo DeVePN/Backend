@@ -162,24 +162,73 @@ export async function getOrCreateUser(telegramId, userData = {}) {
  * Get user by wallet address
  */
 export async function getUserByWallet(walletAddress) {
+  console.log('[getUserByWallet] Input wallet address:', walletAddress);
+
   // TON addresses can be in different formats (EQ vs 0Q/UQ)
   // Extract the base64 part (everything after EQ/0Q/UQ prefix)
-  // and search for users with addresses ending in that base64 part
   const addressBase = walletAddress.replace(/^(EQ|0Q|UQ)/, '');
+  console.log('[getUserByWallet] Address base (without prefix):', addressBase);
 
-  const { data, error } = await supabase
+  // Try multiple query strategies
+  // Strategy 1: Exact match
+  let { data, error } = await supabase
     .from('users')
     .select('*')
-    .or(`ton_wallet_address.eq.${walletAddress},ton_wallet_address.like.%${addressBase}`)
-    .single();
+    .eq('ton_wallet_address', walletAddress)
+    .maybeSingle();
 
-  if (error && error.code === 'PGRST116') {
-    // User not found
-    return null;
+  if (data) {
+    console.log('[getUserByWallet] User found with exact match:', {
+      id: data.id,
+      wallet: data.ton_wallet_address,
+      telegram_id: data.telegram_id
+    });
+    return data;
   }
 
-  if (error) throw error;
-  return data;
+  console.log('[getUserByWallet] Exact match failed, trying base address match');
+
+  // Strategy 2: Match on base address (case insensitive)
+  // This handles EQ vs 0Q vs UQ prefix differences
+  ({ data, error } = await supabase
+    .from('users')
+    .select('*')
+    .ilike('ton_wallet_address', `%${addressBase}`)
+    .maybeSingle());
+
+  if (data) {
+    console.log('[getUserByWallet] User found with base address match:', {
+      id: data.id,
+      wallet: data.ton_wallet_address,
+      telegram_id: data.telegram_id
+    });
+    return data;
+  }
+
+  // Strategy 3: Try with different prefixes
+  const prefixes = ['EQ', '0Q', 'UQ'];
+  for (const prefix of prefixes) {
+    const testAddress = prefix + addressBase;
+    console.log('[getUserByWallet] Trying prefix:', prefix, '→', testAddress);
+
+    ({ data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('ton_wallet_address', testAddress)
+      .maybeSingle());
+
+    if (data) {
+      console.log('[getUserByWallet] User found with prefix', prefix, ':', {
+        id: data.id,
+        wallet: data.ton_wallet_address,
+        telegram_id: data.telegram_id
+      });
+      return data;
+    }
+  }
+
+  console.log('[getUserByWallet] User not found after all strategies for wallet:', walletAddress);
+  return null;
 }
 
 /**
@@ -386,13 +435,18 @@ export async function stopSession(sessionId, usage) {
  * Get all sessions for a wallet address
  */
 export async function getUserSessions(walletAddress) {
+  console.log('[getUserSessions] Fetching sessions for wallet:', walletAddress);
+
   // First get the user by wallet
   const user = await getUserByWallet(walletAddress);
 
   if (!user) {
     // No user found, return empty array
+    console.log('[getUserSessions] No user found, returning empty array');
     return [];
   }
+
+  console.log('[getUserSessions] User found, fetching sessions for user_id:', user.id);
 
   // Then get sessions for that user
   const { data, error } = await supabase
@@ -413,8 +467,13 @@ export async function getUserSessions(walletAddress) {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching user sessions:', error);
+    console.error('[getUserSessions] Error fetching sessions:', error);
     throw error;
+  }
+
+  console.log('[getUserSessions] Found', (data || []).length, 'sessions');
+  if (data && data.length > 0) {
+    console.log('[getUserSessions] Session statuses:', data.map(s => ({ id: s.id, status: s.status, node_id: s.node_id })));
   }
 
   return data || [];

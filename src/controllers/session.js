@@ -243,8 +243,10 @@ export const stop = asyncHandler(async (req, res) => {
  */
 export const getActiveSession = asyncHandler(async (req, res) => {
   const { wallet } = req.params;
+  console.log('[getActiveSession] Request for wallet:', wallet);
 
   if (!wallet) {
+    console.log('[getActiveSession] No wallet address provided');
     return res.status(400).json({
       error: 'Wallet address is required'
     });
@@ -252,11 +254,13 @@ export const getActiveSession = asyncHandler(async (req, res) => {
 
   // Get all sessions for this wallet
   const sessions = await getUserSessions(wallet);
+  console.log('[getActiveSession] Retrieved', sessions.length, 'sessions');
 
   // Find the active one
   const activeSession = sessions.find(s => s.status === 'active');
 
   if (!activeSession) {
+    console.log('[getActiveSession] No active session found');
     return res.json({
       success: true,
       active: false,
@@ -264,7 +268,14 @@ export const getActiveSession = asyncHandler(async (req, res) => {
     });
   }
 
-  res.json({
+  console.log('[getActiveSession] Active session found:', {
+    id: activeSession.id,
+    node_id: activeSession.node_id,
+    status: activeSession.status,
+    has_node_data: !!activeSession.nodes
+  });
+
+  const responseData = {
     success: true,
     active: true,
     session: {
@@ -295,7 +306,10 @@ export const getActiveSession = asyncHandler(async (req, res) => {
         price_per_minute: activeSession.nodes.price_per_minute
       } : null
     }
-  });
+  };
+
+  console.log('[getActiveSession] Sending response with session id:', responseData.session.id);
+  res.json(responseData);
 });
 
 /**
