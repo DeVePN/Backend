@@ -277,8 +277,71 @@ export const getActiveSession = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * GET /session/:id
+ * Get session details by ID
+ */
+export const getSessionById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  // Try to get session by UUID (id) or session_token
+  // Since we don't have a direct getSessionById in supabase service that returns joined data easily,
+  // we can reuse getSessionByToken if the ID passed is a token, or add a new service method.
+  // But wait, the frontend passes the UUID (session.id).
+  // Let's check getSessionByToken implementation. It queries by session_token.
+  // We need to query by ID.
+
+  // Let's assume we need to add getSessionById to supabase service or use a raw query.
+  // For now, let's use getSessionByToken if it matches, or fetch all user sessions and find it? No, inefficient.
+
+  // Let's import getSessionById from supabase service if it exists, or add it.
+  // Checking supabase.js... it has getSessionByToken.
+  // It does NOT have getSessionById.
+  // I will add getSessionById to supabase service in the next step.
+  // For now, I'll implement the controller assuming the service function exists.
+
+  const { getSessionById: dbGetSessionById } = await import('../services/supabase.js');
+
+  const session = await dbGetSessionById(id);
+
+  if (!session) {
+    return res.status(404).json({
+      error: 'Session not found'
+    });
+  }
+
+  // Construct response
+  res.json({
+    id: session.id,
+    sessionToken: session.session_token,
+    status: session.status,
+    startTime: session.start_time,
+    endTime: session.end_time,
+    nodeId: session.node_id,
+    nodeLocation: session.nodes ? {
+      country: session.nodes.country,
+      city: session.nodes.city,
+      countryCode: session.nodes.region // Assuming region is country code or similar
+    } : {},
+    connection: {
+      serverIP: session.nodes?.endpoint?.split(':')[0],
+      port: session.nodes?.endpoint?.split(':')[1],
+      clientIP: session.client_ip
+    },
+    config: session.wg_client_private_key ? {
+      privateKey: session.wg_client_private_key,
+      address: session.client_ip,
+      dns: session.dns_servers
+    } : null,
+    costPerHour: session.nodes?.price_per_minute ? session.nodes.price_per_minute * 60 : 0,
+    totalCost: session.cost_nanoton,
+    paymentChannelId: session.payment_channel_id
+  });
+});
+
 export default {
   start,
   stop,
-  getActiveSession
+  getActiveSession,
+  getSessionById
 };

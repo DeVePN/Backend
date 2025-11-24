@@ -311,6 +311,20 @@ export async function getSessionByToken(sessionToken) {
 }
 
 /**
+ * Get session by ID
+ */
+export async function getSessionById(sessionId) {
+  const { data, error } = await supabase
+    .from('sessions')
+    .select('*, nodes(*), payment_channels(*)')
+    .eq('id', sessionId)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
  * Update session and stop it
  */
 export async function stopSession(sessionId, usage) {
