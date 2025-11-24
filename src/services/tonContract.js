@@ -63,8 +63,9 @@ export function prepareStartSessionTx(nodeId, depositAmount) {
     }
 
     // Build StartSession message
+    // OpCode: 0x1CAB8E95 (480744981) - from compiled Tact contract
     const messageBody = beginCell()
-        .storeUint(0x00000001, 32) // op code for StartSession (arbitrary for demo)
+        .storeUint(0x1CAB8E95, 32) // op code for StartSession
         .storeUint(nodeId, 32)
         .endCell();
 
