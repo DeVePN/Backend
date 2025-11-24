@@ -1,6 +1,6 @@
 import express from 'express';
 import { getNodes, getNodeById, register, heartbeat } from './controllers/nodes.js';
-import { start, stop, getActiveSession, getSessionById, getSessions } from './controllers/session.js';
+import { start, stop, getActiveSession, getSession, getSessions } from './controllers/session.js';
 import {
   prepareSessionStart,
   prepareSessionEnd,
@@ -89,7 +89,7 @@ router.get(
 
 router.get(
   '/session/:id',
-  getSessionById
+  getSession
 );
 
 router.get(
